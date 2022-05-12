@@ -5,6 +5,7 @@ from net.xcit import XCABlock1D
 
 class OffsetDecoder(nn.Module):
     def __init__(self, in_dim, out_dim, bias=True, activation=nn.ReLU):
+        super(OffsetDecoder, self).__init__()
         self.l0 = nn.Linear(in_dim, in_dim, bias=bias)
         self.l1 = nn.Linear(in_dim, in_dim, bias=bias)
         self.l2 = nn.Linear(in_dim, in_dim, bias=bias)
