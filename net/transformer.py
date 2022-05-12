@@ -3,6 +3,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 from net.xcit import XCABlock1D
 
+class OffsetDecoder(nn.Module):
+    def __init__(self, in_dim, out_dim, bias=True, activation=nn.ReLU):
+        self.l0 = nn.Linear(in_dim, in_dim, bias=bias)
+        self.l1 = nn.Linear(in_dim, in_dim, bias=bias)
+        self.l2 = nn.Linear(in_dim, in_dim, bias=bias)
+        self.l3 = nn.Linear(in_dim, out_dim, bias=bias)
+        self.acti = activation()
+
+    def forward(self, x):
+        x = x + self.acti(self.l0(x))
+        x = x + self.acti(self.l1(x))
+        x = x + self.acti(self.l2(x))
+        x = self.l3(x)
+
+        return x
+
 
 class ShapeTransformer(nn.Module):
     def __init__(self, in_vtxs, out_vtxs): 
@@ -56,15 +72,7 @@ class ShapeTransformer(nn.Module):
         self.style_mlp  = nn.ModuleList([
             nn.Linear(latent_channels, latent_channels, bias=True) for i in range(len(self.shape_dec))
         ]) # and for each layer of xct transformer(as described in sec 3.4)
-        self.offset_dec = nn.Sequential(
-            nn.Linear(latent_channels, out_channels[2], bias=True),
-            torch.nn.ReLU(),
-            nn.Linear(out_channels[2], out_channels[1], bias=True),
-            torch.nn.ReLU(),
-            nn.Linear(out_channels[1], out_channels[0], bias=True),
-            torch.nn.ReLU(),
-            nn.Linear(out_channels[0], 3, bias=True),
-        )
+        self.offset_dec = OffsetDecoder(latent_channels, in_channels)
 
     def encode(self, tx, x):
         z = self.inference_model(tx, x)
